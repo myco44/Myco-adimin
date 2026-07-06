@@ -1,0 +1,587 @@
+
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANELI YA MSIMAMIZI MKUU - KAVISHE APP SUITE</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#0b0f19] text-gray-200 min-h-screen">
+
+    <!-- ================= LOW-LEVEL SECURITY WALL (PASSWORD PROMPT) ================= -->
+    <div id="securityWall" class="fixed inset-0 z-[100] bg-[#020617] flex items-center justify-center p-4">
+        <div class="bg-[#111827] border border-gray-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-6 text-center">
+            <div class="w-16 h-16 bg-red-600/10 border border-red-500/30 rounded-2xl flex items-center justify-center mx-auto text-red-500 text-3xl animate-pulse">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-xl font-black tracking-wide text-white uppercase">Mthibitisho wa Utawala</h2>
+                <p class="text-xs text-gray-400">Jopo hili limefungwa kwa ajili ya Mwalimu Kavishe pekee.</p>
+            </div>
+            <div class="space-y-4">
+                <div class="space-y-1 text-left">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ingiza Nywila ya Usimamizi Mkuu</label>
+                    <input type="password" id="adminSecretKey" class="w-full bg-[#1f2937] border border-gray-700 focus:border-red-500 rounded-xl px-4 py-3.5 text-sm text-white outline-none transition" placeholder="••••••••••••">
+                </div>
+                <button id="unlockBtn" class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-black text-xs py-3.5 rounded-xl transition uppercase tracking-wider shadow-lg shadow-red-900/30">
+                    Thibitisha Uingiaji
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN ADMIN WORKSPACE ================= -->
+    <div id="adminWorkspace" class="hidden min-h-screen flex flex-col">
+        <!-- TOP HEADER -->
+        <header class="bg-[#111827] border-b border-gray-800 p-4 sticky top-0 z-50 shadow-md">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-red-600 p-2 rounded-lg text-white">
+                        <i class="fas fa-sliders-h text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-wide uppercase text-white">Paneli ya Msimamizi Mkuu</h1>
+                        <p class="text-xs text-gray-400">Udhibiti wa Wanafunzi na Mifumo yote ya Kavishe Suite</p>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Funga Jopo</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 flex-1">
+            <!-- ERROR/SUCCESS TOAST NOTIFICATION -->
+            <div id="toast" class="hidden fixed bottom-5 right-5 z-50 text-white text-sm font-semibold px-6 py-4 rounded-xl shadow-2xl border transition-all duration-300 max-w-md">
+                <span id="toastMessage">Mabadiliko yamefanyika.</span>
+            </div>
+
+            <!-- SECTIONS GENERATOR FOR BROADCAST -->
+            <section class="bg-[#111827] border border-gray-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex items-center space-x-2 text-red-500 font-bold uppercase tracking-wider text-sm mb-4">
+                    <i class="fas fa-bullhorn"></i>
+                    <h2>Ubao wa Matangazo ya Mfumo</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Lengo la Tangazo (Target System App)</label>
+                        <select id="broadcastTarget" class="w-full bg-[#1f2937] border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 font-medium">
+                            <option value="global">Mifumo Yote (App Zote 20+)</option>
+                            <option value="school">Kavishe Primary & Secondary Helper Pekee</option>
+                            <option value="university">Kavishe University Helper Pro Pekee</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Tangazo Kuu (Dashboard Notice)</label>
+                        <textarea id="broadcastNotice" rows="3" placeholder="Andika tangazo la kuonekana kwa wanafunzi wote..." class="w-full bg-[#1f2937] border border-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500 resize-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Ujumbe wa Funga Akaunti (Payment Alert)</label>
+                        <textarea id="paymentText" rows="3" placeholder="Ujumbe utakaotokea mwanafunzi akifungiwa kwa sababu ya ada..." class="w-full bg-[#1f2937] border border-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500 resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-col sm:flex-row justify-end gap-3">
+                    <button id="deleteBroadcastBtn" class="w-full sm:w-auto bg-gray-800 hover:bg-red-950 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-900 font-bold text-sm px-6 py-3 rounded-xl transition-all flex items-center justify-center space-x-2">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>FUTA TANGAZO LA SASA</span>
+                    </button>
+                    <button id="saveBroadcastBtn" class="w-full sm:w-auto bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg shadow-red-900/30 transition-all flex items-center justify-center space-x-2">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>RUSHA TANGAZO MPYA</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- STUDENT REGISTRATION TABLE LIST -->
+            <section class="bg-[#111827] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-5 border-b border-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex items-center space-x-2 text-white font-bold uppercase tracking-wider text-sm">
+                        <i class="fas fa-users text-red-500"></i>
+                        <h2>Orodha ya Wanafunzi Waliosajiliwa</h2>
+                    </div>
+                    <button id="refreshBtn" class="bg-[#1f2937] hover:bg-gray-700 text-gray-300 hover:text-white font-semibold text-xs px-4 py-2 rounded-xl transition-colors border border-gray-700 flex items-center space-x-2">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#1a2234] text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-800">
+                                <th class="px-6 py-4">Mwanafunzi</th>
+                                <th class="px-6 py-4">Barua Pepe</th>
+                                <th class="px-6 py-4 text-center">Muda wa Usajili</th>
+                                <th class="px-6 py-4 text-center">Ruhusa Shule</th>
+                                <th class="px-6 py-4 text-center">Ruhusa Chuo</th>
+                                <th class="px-6 py-4 text-center">Hali ya Akaunti</th>
+                                <th class="px-6 py-4 text-center">Hatua</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody" class="divide-y divide-gray-800/50 text-sm">
+                            <tr>
+                                <td colspan="7" class="px-6 py-12 text-center text-gray-500 font-medium">
+                                    <i class="fas fa-spinner fa-spin text-xl text-red-500 mb-2 block"></i>
+                                    Mfumo unavuta data ya wanafunzi kutoka Firestore...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ================= DELETE ACCOUNT CONFIRMATION MODAL ================= -->
+    <div id="deleteConfirmModal" class="hidden fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-4">
+        <div class="bg-[#111827] border border-red-900/50 w-full max-w-sm p-6 rounded-2xl shadow-2xl space-y-5 text-center">
+            <div class="w-14 h-14 bg-red-600/10 border border-red-500/30 rounded-2xl flex items-center justify-center mx-auto text-red-500 text-2xl">
+                <i class="fas fa-triangle-exclamation"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-lg font-black text-white uppercase">Futa Akaunti Milele?</h3>
+                <p class="text-xs text-gray-400">
+                    Unakaribia kufuta akaunti ya <span id="deleteTargetName" class="text-white font-bold">mwanafunzi</span> pamoja na data yake YOTE (wasifu, ruhusa, na rekodi zinazohusiana) kwenye Firestore. Kitendo hiki HAKIWEZI kutenduliwa.
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <button id="cancelDeleteBtn" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs py-3 rounded-xl transition-all uppercase tracking-wide">
+                    Ghairi
+                </button>
+                <button id="confirmDeleteBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-3 rounded-xl transition-all uppercase tracking-wide">
+                    Ndiyo, Futa Milele
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE AND SECURITY LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCx7nOR0DjKfEt3PkVTeZFa9xQP0_EPysI",
+            authDomain: "kavishe-smart-app.firebaseapp.com",
+            projectId: "kavishe-smart-app",
+            storageBucket: "kavishe-smart-app.firebasestorage.app",
+            messagingSenderId: "861071206882",
+            appId: "1:861071206882:web:02cb51b55db7696ab371bb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ================= SECURITY WALL LOGIC =================
+        const MASTER_PASSWORD = "KavisheMkuu2026"; 
+
+        const securityWall = document.getElementById('securityWall');
+        const adminWorkspace = document.getElementById('adminWorkspace');
+        const inputField = document.getElementById('adminSecretKey');
+
+        if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+            securityWall.classList.add('hidden');
+            adminWorkspace.classList.remove('hidden');
+            fetchStudents();
+            loadBroadcastData();
+        }
+
+        document.getElementById('unlockBtn').addEventListener('click', () => {
+            if (inputField.value === MASTER_PASSWORD) {
+                sessionStorage.setItem('isAdminAuthenticated', 'true');
+                securityWall.classList.add('hidden');
+                adminWorkspace.classList.remove('hidden');
+                fetchStudents();
+                loadBroadcastData();
+            } else {
+                alert("Ufikiaji Umekataliwa: Password Si Sahihi!");
+                inputField.value = "";
+            }
+        });
+
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('unlockBtn').click();
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.removeItem('isAdminAuthenticated');
+            window.location.reload();
+        });
+
+        // ================= TOAST NOTIFICATION WRAPPER =================
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        function showToast(msg, isStatus = "info") {
+            toastMessage.textContent = msg;
+            let bgClass = 'bg-blue-600 border-blue-500';
+            if(isStatus === "success") bgClass = 'bg-green-600 border-green-500';
+            if(isStatus === "error") bgClass = 'bg-red-600 border-red-500';
+
+            toast.className = `fixed bottom-5 right-5 z-50 text-white text-sm font-semibold px-6 py-4 rounded-xl shadow-2xl border transition-all duration-300 ${bgClass}`;
+            toast.classList.remove('hidden');
+            if (isStatus !== "info") {
+                setTimeout(() => toast.classList.add('hidden'), 4000);
+            }
+        }
+
+        // ================= DATA FORMAT HARMONIZATION BRIDGE =================
+        const targetDropdown = document.getElementById('broadcastTarget');
+        
+        async function loadBroadcastData() {
+            if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') return;
+            const target = targetDropdown.value;
+            try {
+                const docSnap = await getDoc(doc(db, "system", "broadcast"));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Njia ya Ulinzi: Kama anatafuta global, angalia zote mbili zisije zikawa tupu
+                    if (target === "global") {
+                        document.getElementById('broadcastNotice').value = data.global_notice || data.broadcastNotice || "";
+                        document.getElementById('paymentText').value = data.global_paymentText || data.paymentText || "";
+                    } else {
+                        document.getElementById('broadcastNotice').value = data[`${target}_notice`] || "";
+                        document.getElementById('paymentText').value = data[`${target}_paymentText`] || "";
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading:", error);
+            }
+        }
+
+        targetDropdown.addEventListener('change', loadBroadcastData);
+
+        // KITUFE CHA RUSHA TANGAZO (HUYU ANAANDIKA PANDE ZOTE ILI KUTATUA MKANGANYIKO)
+        document.getElementById('saveBroadcastBtn').addEventListener('click', async () => {
+            const target = targetDropdown.value;
+            const notice = document.getElementById('broadcastNotice').value;
+            const payment = document.getElementById('paymentText').value;
+
+            showToast("Inatuma tangazo, tafadhali subiri...", "info");
+
+            const updateData = {};
+            // 1. Mfumo mpya (Dynamic mappings)
+            updateData[`${target}_notice`] = notice;
+            updateData[`${target}_paymentText`] = payment;
+            updateData[`${target}_updatedAt`] = new Date().toISOString();
+
+            // 2. Mfumo wa zamani (Ili kuzuia App za user zisife kama zilikuwa zinasoma majina haya ya zamani)
+            if (target === "global") {
+                updateData["broadcastNotice"] = notice;
+                updateData["paymentText"] = payment;
+                updateData["updatedAt"] = new Date().toISOString();
+            }
+
+            try {
+                await setDoc(doc(db, "system", "broadcast"), updateData, { merge: true });
+                showToast("Hongera! Tangazo limerushwa pande zote kwa ufanisi.", "success");
+            } catch (error) {
+                showToast("Kosa: Imeshindikana kuandika kule Firestore Rules. Angalia kichupo cha Rules!", "error");
+            }
+        });
+
+        // KITUFE CHA FUTA TANGAZO
+        document.getElementById('deleteBroadcastBtn').addEventListener('click', async () => {
+            const target = targetDropdown.value;
+            if (confirm("Je, una uhakika unataka kusafisha ubao huu wa matangazo?")) {
+                showToast("Inafuta tangazo...", "info");
+                
+                const updateData = {};
+                updateData[`${target}_notice`] = "";
+                updateData[`${target}_paymentText`] = "";
+                
+                if (target === "global") {
+                    updateData["broadcastNotice"] = "";
+                    updateData["paymentText"] = "";
+                }
+
+                try {
+                    await setDoc(doc(db, "system", "broadcast"), updateData, { merge: true });
+                    document.getElementById('broadcastNotice').value = "";
+                    document.getElementById('paymentText').value = "";
+                    showToast("Ubao wa matangazo umefutwa kikamilifu!", "success");
+                } catch (error) {
+                    showToast("Kosa la Mfumo: Imeshindikana kufuta.", "error");
+                }
+            }
+        });
+
+        // ================= EMAIL VALIDATION HELPER =================
+        // Sahihisha muundo wa barua pepe kabla ya kuihifadhi Firestore
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(String(email).trim());
+        }
+
+        // ================= DELETE ACCOUNT (CONFIRMATION MODAL) LOGIC =================
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const deleteTargetName = document.getElementById('deleteTargetName');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let pendingDeleteUid = null;
+        let pendingDeleteRow = null;
+
+        function openDeleteConfirm(uid, name, rowEl) {
+            pendingDeleteUid = uid;
+            pendingDeleteRow = rowEl;
+            deleteTargetName.textContent = name || "mwanafunzi huyu";
+            deleteConfirmModal.classList.remove('hidden');
+        }
+
+        function closeDeleteConfirm() {
+            pendingDeleteUid = null;
+            pendingDeleteRow = null;
+            deleteConfirmModal.classList.add('hidden');
+        }
+
+        cancelDeleteBtn.addEventListener('click', closeDeleteConfirm);
+        deleteConfirmModal.addEventListener('click', (e) => {
+            if (e.target === deleteConfirmModal) closeDeleteConfirm();
+        });
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!pendingDeleteUid) return;
+            const uid = pendingDeleteUid;
+            const rowEl = pendingDeleteRow;
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.textContent = "Inafuta...";
+
+            try {
+                // Futa hati kuu ya mtumiaji (wasifu, ruhusa, hali - kila kitu kilichohifadhiwa
+                // ndani ya users/{uid}) kabisa kutoka Firestore.
+                await deleteDoc(doc(db, "users", uid));
+
+                // KUMBUKA (MUHIMU): SDK hii ya upande wa mteja (client) haiwezi kufuta akaunti
+                // ya Firebase Authentication ya mtumiaji MWINGINE - hilo linahitaji Admin SDK
+                // (kwa mfano Cloud Function yenye httpsCallable) kwa sababu za kiusalama.
+                // Hapa ndipo unapopaswa kuita Cloud Function yako, mfano:
+                //
+                // import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+                // const functions = getFunctions(app);
+                // const deleteUserAccount = httpsCallable(functions, 'deleteUserAccount');
+                // await deleteUserAccount({ uid });
+                //
+                // Bila hiyo, data ya Firestore itafutwa kabisa, lakini akaunti ya Auth
+                // itabaki (mtumiaji hataweza kuingia tena kama umefunga akaunti yake kwa
+                // njia nyingine, lakini rekodi ya Auth itaendelea kuwepo upande wa Firebase).
+
+                if (rowEl && rowEl.parentNode) {
+                    rowEl.parentNode.removeChild(rowEl);
+                }
+
+                const tbody = document.getElementById('studentTableBody');
+                if (!tbody.querySelector('tr')) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Hakuna mwanafunzi yeyote aliyesajiliwa.</td></tr>`;
+                }
+
+                showToast("Akaunti na data yake yamefutwa milele!", "success");
+            } catch (error) {
+                showToast("Kosa: Imeshindikana kufuta akaunti.", "error");
+            } finally {
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.textContent = "Ndiyo, Futa Milele";
+                closeDeleteConfirm();
+            }
+        });
+
+        // ================= FETCH AND DRAW STUDENTS LIST =================
+        async function fetchStudents() {
+            if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') return;
+            const tbody = document.getElementById('studentTableBody');
+            try {
+                const querySnapshot = await getDocs(collection(db, "users"));
+                tbody.innerHTML = "";
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Hakuna mwanafunzi yeyote aliyesajiliwa.</td></tr>`;
+                    return;
+                }
+
+                querySnapshot.forEach((docSnap) => {
+                    const user = docSnap.data();
+                    const userId = docSnap.id;
+
+                    if (user.role === 'Admin') return;
+
+                    const permissions = user.appPermissions || {};
+                    const primaryStatus = permissions.secondary || 'active';
+                    const univStatus = permissions.university || 'active';
+                    const globalStatus = user.status || 'active';
+
+                    let formattedTime = "N/A";
+                    if (user.createdAt) {
+                        try {
+                            const dateObj = new Date(user.createdAt);
+                            formattedTime = dateObj.toLocaleDateString('sw-TZ', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                            }) + " " + dateObj.toLocaleTimeString('sw-TZ', { hour: '2-digit', minute: '2-digit' });
+                        } catch (e) {
+                            formattedTime = user.createdAt;
+                        }
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-[#161e2e]/50 transition-colors border-b border-gray-800/30 text-gray-300";
+
+                    const safeName = (user.fullName || 'Haina Jina');
+                    const safeEmail = (user.email || '');
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-semibold text-white">${safeName}</td>
+                        <td class="px-6 py-4 text-xs font-mono text-gray-400">
+                            <input type="email" data-id="${userId}" value="${safeEmail}" placeholder="barua-pepe@mfano.com" class="email-input w-full min-w-[160px] bg-[#1f2937] border border-gray-700 focus:border-red-500 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none transition font-mono" />
+                        </td>
+                        <td class="px-6 py-4 text-center text-xs text-orange-400 font-semibold">${formattedTime}</td>
+                        <td class="px-6 py-4 text-center">
+                            <select data-id="${userId}" data-field="secondary" class="perm-select bg-[#1f2937] text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none border border-gray-700 text-center ${primaryStatus === 'active' ? 'text-green-400' : 'text-red-400'}">
+                                <option value="active" ${primaryStatus === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="blocked" ${primaryStatus === 'blocked' ? 'selected' : ''}>Blocked</option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <select data-id="${userId}" data-field="university" class="perm-select bg-[#1f2937] text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none border border-gray-700 text-center ${univStatus === 'active' ? 'text-green-400' : 'text-red-400'}">
+                                <option value="active" ${univStatus === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="blocked" ${univStatus === 'blocked' ? 'selected' : ''}>Blocked</option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button data-id="${userId}" data-status="${globalStatus}" class="status-toggle-btn text-xs font-bold px-4 py-2 rounded-xl transition-all ${globalStatus === 'active' ? 'bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'}">
+                                ${globalStatus === 'active' ? '<i class="fas fa-lock-open mr-1"></i> Wazi' : '<i class="fas fa-lock mr-1"></i> Funga'}
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button data-id="${userId}" data-name="${safeName}" class="delete-account-btn text-xs font-bold px-3 py-2 rounded-xl transition-all bg-gray-800 hover:bg-red-950 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-900">
+                                <i class="fas fa-user-slash mr-1"></i> Futa
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // REBIND EVENTS
+                document.querySelectorAll('.perm-select').forEach(select => {
+                    select.addEventListener('change', async (e) => {
+                        const uid = e.target.getAttribute('data-id');
+                        const field = e.target.getAttribute('data-field');
+                        const val = e.target.value;
+
+                        try {
+                            const updateObj = {};
+                            updateObj[`appPermissions.${field}`] = val;
+                            await updateDoc(doc(db, "users", uid), updateObj);
+                            e.target.className = `perm-select bg-[#1f2937] text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none border border-gray-700 text-center ${val === 'active' ? 'text-green-400' : 'text-red-400'}`;
+                            showToast("Ruhusa za masomo zimesasishwa!", "success");
+                        } catch (err) {
+                            showToast("Imeshindikana kusasisha ruhusa.", "error");
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.status-toggle-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const button = e.target.closest('button');
+                        const uid = button.getAttribute('data-id');
+                        const currentStatus = button.getAttribute('data-status');
+                        const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
+
+                        try {
+                            await updateDoc(doc(db, "users", uid), { status: newStatus });
+                            button.setAttribute('data-status', newStatus);
+                            if (newStatus === 'active') {
+                                button.className = "status-toggle-btn text-xs font-bold px-4 py-2 rounded-xl transition-all bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20";
+                                button.innerHTML = '<i class="fas fa-lock-open mr-1"></i> Wazi';
+                            } else {
+                                button.className = "status-toggle-btn text-xs font-bold px-4 py-2 rounded-xl transition-all bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20";
+                                button.innerHTML = '<i class="fas fa-lock mr-1"></i> Funga';
+                            }
+                            showToast(`Hali ya akaunti imebadilishwa!`, "success");
+                        } catch (err) {
+                            showToast("Imeshindikana kubadili hali ya akaunti.", "error");
+                        }
+                    });
+                });
+
+                // EMAIL FIELD: HIFADHI KWA UTHIBITISHO (VALIDATION) UKITOKA NJE YA UWANJA (ON BLUR)
+                document.querySelectorAll('.email-input').forEach(input => {
+                    let originalValue = input.value;
+                    input.addEventListener('focus', () => {
+                        originalValue = input.value;
+                    });
+                    input.addEventListener('blur', async (e) => {
+                        const uid = e.target.getAttribute('data-id');
+                        const newVal = e.target.value.trim();
+
+                        if (newVal === originalValue) return; // hakuna mabadiliko
+
+                        if (newVal === "") {
+                            // Kuruhusu kufuta barua pepe (kuiacha wazi) bila kulazimisha uthibitisho
+                            try {
+                                await updateDoc(doc(db, "users", uid), { email: "" });
+                                originalValue = "";
+                                input.classList.remove('border-red-500');
+                                showToast("Barua pepe imeondolewa.", "success");
+                            } catch (err) {
+                                showToast("Imeshindikana kusasisha barua pepe.", "error");
+                                input.value = originalValue;
+                            }
+                            return;
+                        }
+
+                        if (!isValidEmail(newVal)) {
+                            input.classList.add('border-red-500');
+                            showToast("Barua pepe si sahihi. Tafadhali angalia muundo (mfano: jina@mfano.com).", "error");
+                            input.value = originalValue;
+                            return;
+                        }
+
+                        try {
+                            await updateDoc(doc(db, "users", uid), { email: newVal });
+                            input.classList.remove('border-red-500');
+                            originalValue = newVal;
+                            showToast("Barua pepe ya mwanafunzi imesasishwa!", "success");
+                        } catch (err) {
+                            showToast("Imeshindikana kusasisha barua pepe.", "error");
+                            input.value = originalValue;
+                        }
+                    });
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') e.target.blur();
+                    });
+                });
+
+                // DELETE ACCOUNT BUTTONS: FUNGUA MODAL YA UTHIBITISHO
+                document.querySelectorAll('.delete-account-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const button = e.target.closest('button');
+                        const uid = button.getAttribute('data-id');
+                        const name = button.getAttribute('data-name');
+                        const rowEl = button.closest('tr');
+                        openDeleteConfirm(uid, name, rowEl);
+                    });
+                });
+
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-red-400 font-bold">Kosa la Mfumo: Imeshindikana kuvuta jedwali.</td></tr>`;
+            }
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', fetchStudents);
+    </script>
+</body>
+</html>
